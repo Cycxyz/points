@@ -147,16 +147,6 @@ def give_points_for_user_balances(user_balances, points) -> Dict[str, Points]:
 def validate_end_state(day_index, result_user_balances):
     cached_user_balances = get_user_balance_at_day(day_index, "end_state")
 
-    # print( "=" * 100)
-    # print("result user balances")
-    # for address, balance in result_user_balances.items():
-    #     print(f"{address}: {balance.balance} {balance.nft_ids}")
-    # print( "=" * 100)
-    # print("cached user balances")
-    # for address, balance in cached_user_balances.items():
-    #     print(f"{address}: {balance.balance} {balance.nft_ids}")
-    # print( "=" * 100)
-
     result_user_balances_items = [
         [address, balance]
         for address, balance in result_user_balances.items()

@@ -82,6 +82,12 @@ def combine_events(block_number_to_transfer_events, block_number_to_nft_events):
         block_number_to_events[block_number].extend(transfer_events)
     for block_number, nft_events in block_number_to_nft_events.items():
         block_number_to_events[block_number].extend(nft_events)
+
+    for block_number, events in block_number_to_events.items():
+        block_number_to_events[block_number] = events.sort(
+            key=lambda x: (x["blockNumber"], x["transactionIndex"], x["logIndex"])
+        )
+
     return block_number_to_events
 
 
@@ -97,11 +103,11 @@ def get_user_balance_at_day(day_index, state_key):
     for address, balance in state["pilot_vault"][state_key].items():
         user_balances[address.lower()].balance = balance
 
-    print( "=" * 100)
+    print("=" * 100)
     print("user balances")
     for address, balance in user_balances.items():
         print(f"{address}: {balance.balance} {balance.nft_ids}")
-    print( "=" * 100)
+    print("=" * 100)
 
     return user_balances
 
@@ -128,7 +134,9 @@ def get_start_and_end_block_at_day(day_index):
 def give_points_for_user_balances(user_balances, points) -> Dict[str, Points]:
     for address, user_balance in user_balances.items():
         if len(user_balance.nft_ids) == 0:
-            points[address.lower()] += user_balance.balance * POINTS_PER_PILOT_VAULT_TOKEN
+            points[address.lower()] += (
+                user_balance.balance * POINTS_PER_PILOT_VAULT_TOKEN
+            )
         else:
             points[address.lower()] += (
                 user_balance.balance * POINTS_PER_PILOT_VAULT_TOKEN_FOR_NFT
@@ -148,7 +156,7 @@ def validate_end_state(day_index, result_user_balances):
     # for address, balance in cached_user_balances.items():
     #     print(f"{address}: {balance.balance} {balance.nft_ids}")
     # print( "=" * 100)
-    
+
     result_user_balances_items = [
         [address, balance]
         for address, balance in result_user_balances.items()
@@ -198,7 +206,10 @@ def process_points(day_index):
     path = f"data/points_2.0/{day_index}.json"
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
-    points = {address.lower(): points for address, points in points.items() if points > 0}
+    points = {
+        address.lower(): points for address, points in points.items() if points > 0
+    }
     json.dump(points, open(path, "w"), indent=2)
-    
+
+
 process_points(77)

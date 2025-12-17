@@ -19,7 +19,7 @@ def compare_state_and_onchain_data(
     tests_amount: int,
     test_type: str,
     get_state_file: callable,
-    get_user_data_from_state: callable,
+    get_users_data_from_state: callable,
     get_onchain_data: callable,
     validate_data: callable,
 ):
@@ -33,21 +33,20 @@ def compare_state_and_onchain_data(
     if not w3.is_connected():
         pytest.skip("Cannot connect to RPC, check .env file")
 
-    for _ in range(tests_amount):
-        state_file = get_state_file()
+    for i in range(tests_amount):
+        state_file = get_state_file(i)
 
         with open(state_file, "r") as f:
             state_data = json.load(f)
 
         # Pick a random user from nft.end_state
-        user_data = get_user_data_from_state(state_data)
+        users_data = get_users_data_from_state(state_data)
 
-        if user_data is None:
+        if users_data is None:
             pytest.skip(
-                f"No users found in {test_type} test for day {state_data['day_index']}"
+                f"No users found in {test_type} test for day {state_data['day_index']} in state file {state_file}"
             )
 
-        onchain_data = get_onchain_data(w3, state_data, user_data, addresses)
+        onchain_data = get_onchain_data(w3, state_data, users_data, addresses)
 
-        # Pass w3 and addresses to validate_data for cases where additional contract calls are needed
-        validate_data(user_data, onchain_data, state_data, w3, addresses)
+        validate_data(users_data, onchain_data, state_data, w3, addresses)

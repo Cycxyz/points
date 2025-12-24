@@ -70,8 +70,8 @@ def get_onchain_data(w3, state_data, users_data, addresses, block_key):
 def validate_nft_balance_and_ownership(
     users_data, onchain_data, state_data, w3, addresses
 ):
-    users_data_items = sorted(list(users_data.items()))
-    onchain_data_items = sorted(list(onchain_data.items()))
+    users_data_items = sorted(list(users_data.items()), key=lambda x: x[0].lower())
+    onchain_data_items = sorted(list(onchain_data.items()), key=lambda x: x[0].lower())
     assert len(users_data_items) == len(
         onchain_data_items
     ), "Users data and onchain data length mismatch"

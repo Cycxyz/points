@@ -71,8 +71,8 @@ class TestEventsStructure:
                 ).call(block_identifier=prev_event_block)
                 assert (
                     user_balances[user] == balance
-                ), f"User {user} balance mismatch: {user_balances[user]} != {total_supply}"
+                ), f"User {user} balance mismatch: {user_balances[user]} != {total_supply} at block {prev_event_block}"
             assert total_supply == sum(
                 user_balances.values()
-            ), f"Total supply mismatch: {total_supply} != {sum(user_balances.values())}"
+            ), f"Total supply mismatch: {total_supply} != {sum(user_balances.values())} at block {prev_event_block}"
             affected_users.clear()

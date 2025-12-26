@@ -24,6 +24,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run main script
+      - name: Find deployment block
         run: |
-          python3 main.py
+          python3 find_deployment_blocks.py
+      - name: Find daily blocks
+        run: |
+          python3 find_daily_blocks.py
+      - name: Process NFT events
+        run: |
+          python3 nft_events.py
+      - name: Process Pilot Vault events
+        run: |
+          python3 pilot_vault_events.py
+      - name: Process daily states
+        run: |
+          python3 daily_states_v2.py
+      - name: Process daily points
+        run: |
+          python3 daily_points_v2.py
+      - name: Aggregate daily points
+        run: |
+          python3 aggregate_daily_points.py
+      - name: Run all tests
+        run: |
+         python3 test/main_test.py
+          

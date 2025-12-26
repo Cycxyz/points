@@ -2,7 +2,7 @@ import json
 import sys
 import os
 from datetime import datetime, timezone
-from src.utils.aggregated_w3_request import w3_instances, make_aggregated_call
+from .utils.aggregated_w3_request import w3_instances, make_aggregated_call
 from web3 import Web3
 
 def load_contract_addresses():

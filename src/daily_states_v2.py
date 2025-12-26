@@ -1,5 +1,5 @@
 from datetime import datetime
-from utils.process_event_above_user_state import (
+from src.utils.process_event_above_user_state import (
     UserState,
     process_event_above_user_state,
 )
@@ -136,4 +136,5 @@ def process_daily_states():
         user_state_before_start_block = clear_cached_values_for_zero_balances(daily_state.user_state)
 
 
-process_daily_states()
+if __name__ == "__main__":
+    process_daily_states()

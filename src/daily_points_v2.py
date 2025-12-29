@@ -17,8 +17,8 @@ from .utils.get_additional_data import (
 
 ZERO_ADDRESS = "0x" + "0" * 40
 
-POINTS_PER_PILOT_VAULT_TOKEN = 1000
-POINTS_PER_PILOT_VAULT_TOKEN_FOR_NFT = (142 * 1000) // 100  # 1.42
+POINTS_PER_PILOT_VAULT_TOKEN = 1500
+POINTS_PER_PILOT_VAULT_TOKEN_FOR_NFT = (142 * 1500) // 100  # 1.42
 
 lp_balances_snapshot = {}
 lp_balances_snapshot_start_block = 0

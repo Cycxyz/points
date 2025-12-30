@@ -42,7 +42,7 @@ class TestPoints:
         state = states[81]
 
         user = "0xd23d8aead200401091022e5c4304b32b56042808"
-        points_per_one_wei = (point["end_block"] - point["start_block"] + 1) * 1420
+        points_per_one_wei = (point["end_block"] - point["start_block"] + 1) * POINTS_PER_PILOT_VAULT_TOKEN_FOR_NFT
         expected_points = state["pilot_vault"]["end_state"][user]["balance"] * points_per_one_wei
 
         assert (
@@ -65,11 +65,11 @@ class TestPoints:
         balance_increase = 198777366745194886
 
         expected_points = (
-            user_balance_before * 1420 * (event_block_number - state["start_block"])
+            user_balance_before * POINTS_PER_PILOT_VAULT_TOKEN_FOR_NFT * (event_block_number - state["start_block"])
         )
         expected_points += (
             (user_balance_before + balance_increase)
-            * 1420
+            * POINTS_PER_PILOT_VAULT_TOKEN_FOR_NFT
             * (point["end_block"] - event_block_number + 1)
         )
 
@@ -109,10 +109,10 @@ class TestPoints:
         result = give_points_for_user_state(user_state, points)
         
         balance_excluding_snapshot = max(0, 500 - 100)  # 400
-        expected_points = balance_excluding_snapshot * POINTS_PER_PILOT_VAULT_TOKEN  # 400 * 1000 = 400000
+        expected_points = balance_excluding_snapshot * POINTS_PER_PILOT_VAULT_TOKEN  # 400 * 1500 = 600000
         
         assert result["0x1234567890123456789012345678901234567890"] == expected_points
-        assert result["0x1234567890123456789012345678901234567890"] == 400000
+        assert result["0x1234567890123456789012345678901234567890"] == 600000
 
     @patch('src.daily_points_v2.lp_balances_snapshot', new={
         "0xABCDEFABCDEFABCDEFABCDEFABCDEFABCDEFABCD": UserState(balance=200)
@@ -127,10 +127,10 @@ class TestPoints:
         result = give_points_for_user_state(user_state, points)
         
         balance_excluding_snapshot = max(0, 1000 - 200)  # 800
-        expected_points = balance_excluding_snapshot * POINTS_PER_PILOT_VAULT_TOKEN_FOR_NFT  # 800 * 1420 = 1136000
+        expected_points = balance_excluding_snapshot * POINTS_PER_PILOT_VAULT_TOKEN_FOR_NFT  # 800 * 1420 * 1.5 = 1704000
         
         assert result["0xabcdefabcdefabcdefabcdefabcdefabcdefabcd"] == expected_points
-        assert result["0xabcdefabcdefabcdefabcdefabcdefabcdefabcd"] == 1136000
+        assert result["0xabcdefabcdefabcdefabcdefabcdefabcdefabcd"] == 1704000
 
     @patch('src.daily_points_v2.lp_balances_snapshot', new={
         "0x1111111111111111111111111111111111111111": UserState(balance=1000)
@@ -177,9 +177,9 @@ class TestPoints:
         
         result = give_points_for_user_state(user_state, points)
         
-        expected_new_points = 100 * POINTS_PER_PILOT_VAULT_TOKEN  # 100000
+        expected_new_points = 100 * POINTS_PER_PILOT_VAULT_TOKEN  # 150000
         assert result["0x2222222222222222222222222222222222222222"] == 5000 + expected_new_points
-        assert result["0x2222222222222222222222222222222222222222"] == 105000
+        assert result["0x2222222222222222222222222222222222222222"] == 155000
 
     @patch('src.daily_points_v2.lp_balances_snapshot', new={
         "0x1111111111111111111111111111111111111111": UserState(balance=100),

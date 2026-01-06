@@ -1,40 +1,48 @@
-# Points Calculator
+# LTV Points Calculator
 
+A blockchain event processing system that calculates loyalty points for users based on their holdings of Pilot Vault tokens and NFT ownership. The system processes Ethereum blockchain events to track user balances and compute points on a daily basis.
+
+## Overview
+
+This system calculates points for users based on:
+- **Pilot Vault Token Holdings**: Users earn points proportional to their token balance
+- **NFT Ownership Bonus**: Users holding at least one NFT receive a 1.42x multiplier on their points
+
+The calculation runs daily, processing all events from contract deployment through the latest available block, maintaining complete historical state and point accumulation.
+
+## Usage
+
+### Running the Full Pipeline
+
+Execute the complete points calculation pipeline:
+
+```bash
+python3 main.py
 ```
-python3 find_deployment_blocks.py
-python3 find_daily_blocks.py
-python3 nft_events.py
-python3 pilot_vault_events.py
-python3 daily_states_v2.py
-python3 daily_points_v2.py
-python3 aggregate_daily_points.py
-python3 test/main_test.py
+
+This will run all processing steps in sequence:
+1. Find deployment blocks for both contracts
+2. Calculate daily block boundaries
+3. Fetch NFT Transfer events
+4. Fetch Pilot Vault Transfer events
+5. Reconstruct daily states
+6. Calculate daily points
+7. Aggregate points across all days
+8. Run test suite
+9. Copy latest aggregated points to latest folder
+
+### Docker
+
+Build and run using Docker:
+
+```bash
+docker build -t ltv-points .
+docker run ltv-points
 ```
 
-## find_deployment_blocks.py
+## Links
 
-This script identifies the deployment blocks for the NFT and Pilot Vault contracts on the Ethereum blockchain. It uses binary search to efficiently locate the exact block numbers where each contract was first deployed by checking for contract code existence at different block heights. The script reads contract addresses from `config.json` and RPC endpoint, then performs a binary search algorithm that checks whether contract code exists at various block numbers, narrowing down the search range until it finds the first block where the contract has code deployed. For each contract, it retrieves detailed block information including the block number, timestamp, datetime in UTC format, and block hash. The results are saved to `data/deployment_blocks.json` with complete metadata for both contracts. This deployment block information is crucial as it serves as the starting point for all subsequent calculations, ensuring that event processing begins from the moment contracts were actually deployed rather than from an arbitrary block number. The script handles errors gracefully, providing clear feedback if contracts cannot be found or if there are connection issues with the RPC provider.
-
-## find_daily_blocks.py
-
-This script determines the block boundaries for each calendar day from the earliest contract deployment through the latest available block. It uses binary search to efficiently find the first block of each new UTC day, creating precise day boundaries that are essential for daily point calculations. The script starts from the minimum deployment block found in `deployment_blocks.json` and iteratively searches for day transitions using binary search, which checks block timestamps to identify when a new UTC day begins. For each day, it identifies the last block of that day and the first block of the next day, storing this information along with timestamps and block hashes. The script saves individual day boundary files to `data/days_blocks/` in the format `{index}_{date}.json`, where each file contains the day's date, the last block number of that day, the first block of the next day, and metadata flags. This daily boundary information is critical for accurately calculating points on a per-day basis, as it ensures that block ranges are correctly aligned with calendar days regardless of blockchain timing variations. The script excludes the final day if it's incomplete, ensuring only complete days are processed for point calculations.
-
-## nft_events.py
-
-This script fetches all Transfer events from the NFT contract (ERC-721) for each daily period defined by the day block files. It processes events in chunks to handle large block ranges efficiently and avoid RPC rate limits, with automatic retry logic that reduces chunk size if errors occur. The script reads the NFT deployment block and address from `deployment_blocks.json`, then for each day period, it determines the appropriate block range starting from either the NFT deployment block (for day 0) or the first block of the next day from the previous period. It fetches Transfer events which include tokenId transfers between addresses, handling the ERC-721 standard where each token has a unique identifier. The script saves events to `data/events/nft/{day_index}.json` with complete event data including block numbers, transaction hashes, log indices, and transfer arguments (from, to, tokenId). If a file already exists, the script skips processing that day to allow for incremental updates. The events are essential for tracking NFT ownership changes, which directly impact point calculations since users holding NFTs receive a multiplier bonus on their pilot vault token points.
-
-## pilot_vault_events.py
-
-This script retrieves all Transfer events from the Pilot Vault contract (ERC-20) for each daily period, similar to the NFT events script but handling ERC-20 token transfers instead. It processes events in chunks with error handling and automatic chunk size reduction for reliability. The script reads the pilot vault deployment block from `deployment_blocks.json` and constructs block ranges for each day period, accounting for the fact that the pilot vault may be deployed later than the NFT contract. For each day, it fetches Transfer events containing value transfers (not tokenId), which represent ERC-20 token balance changes. The script validates block ranges before processing, checking if the start block is greater than the end block, which would indicate the contract didn't exist during that period. In such cases, it saves an error marker in the output file rather than attempting to fetch events. Events are saved to `data/events/pilot_vault/{day_index}.json` with metadata including contract address, event name, block ranges, and all transfer details. These events are crucial for calculating base points, as users earn points proportional to their pilot vault token holdings, with the amount held determining the daily point accumulation rate.
-
-## daily_states.py
-
-This script reconstructs the complete state of both NFT ownership and pilot vault token balances for each day period by processing all events chronologically. It loads the starting state from previous calculations and applies all events from both NFT and pilot vault contracts in the correct order (sorted by block number, transaction index, and log index) to build an accurate snapshot of user holdings at the start and end of each day. The script processes NFT events to track which addresses own which tokenIds, maintaining sets of token identifiers per address. For pilot vault events, it tracks token balances per address, adding and subtracting values as transfers occur. The script handles edge cases such as contracts not existing during certain periods, empty event files, and maintains state consistency across day boundaries. It saves the state for each day to `data/states/{day_index}.json`, containing both the starting state (inherited from previous days) and ending state (after processing all events for that day) for both contracts. This state information is essential for the points calculation, as it provides the exact holdings at each block, allowing accurate point computation based on what users actually held during each block of the day.
-
-## daily_points.py
-
-This script calculates points earned by each user for each day period by reconstructing state block-by-block and applying the points formula. It processes events chronologically to rebuild the exact state at each block, then calculates points based on pilot vault token holdings with an NFT multiplier bonus. The points formula awards 1000 points per pilot vault token held per block, and if a user holds at least one NFT, they receive a 142/100 multiplier (1.42x), calculated as integer arithmetic to avoid floating point issues. The script loads daily state files to get starting states, then reconstructs block-by-block state by processing all events in order, ensuring accurate representation of holdings at each moment. For each block in the day's range, it calculates points for every user based on their pilot vault balance at that block, applying the NFT multiplier if applicable, and accumulates these points throughout the day. The results are saved to `data/points/{day_index}.json` with metadata including the day index, date, block range, and a dictionary of user addresses to their total points earned that day. This per-day point calculation allows for incremental processing and verification, making it possible to recalculate specific days without reprocessing the entire history.
-
-## aggregate_daily_points.py
-
-This script aggregates daily points across all days to produce cumulative point totals for each user, creating a running total that shows both daily earnings and lifetime accumulation. It processes daily points files sequentially, maintaining a cumulative points dictionary that accumulates each user's points as days are processed. For each day, it creates an aggregated file in `data/aggregated_points/{day_index}.json` that contains both the points earned on that specific day and the cumulative total from all previous days (including the current day). Each user entry includes `day_points` (points earned on that day) and `cumulative_points` (total points from day 0 through the current day), allowing users to see both their daily activity and their overall standing. The script includes all users who have ever earned points, even if they didn't earn points on a particular day (showing day_points as 0 but maintaining their cumulative total). Results are sorted by cumulative points in descending order, making it easy to identify top earners. The aggregated files provide a complete historical view of point accumulation, enabling analysis of point growth over time, daily earning patterns, and overall leaderboard positions at any point in the program's history.
+- **Website**: [LTV](https://ltv.finance)
+- **Protocol implementation**: [GitHub Repository](https://github.com/ltvprotocol/ltv_v0)
+- **Documentation**: [Protocol Documentation](https://docs.ltv.finance)
+- **Twitter**: [@ltvprotocol](https://x.com/ltvprotocol)
